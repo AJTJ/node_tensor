@@ -16,14 +16,21 @@ const App = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch("/text")
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ text }),
+    };
+
+    fetch("/text", requestOptions)
       .then((r) => r.json())
       .then((data) => setColorGrid(data));
   };
 
   const handleChange = (e) => {
-    e.preventDefault();
-    setText(e.value);
+    console.log("change", e.target.value);
+    setText(e.target.value);
   };
 
   return (
@@ -33,12 +40,12 @@ const App = () => {
         {meaning && <div>{meaning}</div>}
       </div>
       <div>
-        <form onSubmit={(e) => handleSubmit()}>
+        <form onSubmit={(e) => handleSubmit(e)}>
           <input onChange={(e) => handleChange(e)} type="text" value={text} />
           <input type="submit" value="submit" />
         </form>
       </div>
-      <div>{colorGrid}</div>
+      <div>Grid nums here: {colorGrid}</div>
     </>
   );
 };

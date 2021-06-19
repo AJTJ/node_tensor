@@ -1,7 +1,8 @@
-// require("@tensorflow/tfjs-node");
 require("dotenv/config");
-const path = require("path");
+// require("@tensorflow/tfjs-node");
 require("@tensorflow/tfjs");
+const path = require("path");
+const bodyParser = require("body-parser");
 const useModel = require("@tensorflow-models/universal-sentence-encoder");
 
 // create app
@@ -10,8 +11,9 @@ const app = express();
 
 //middleware
 app.use(express.static(path.join(__dirname, "..", "build")));
+app.use(bodyParser.json());
 
-const port = 3030;
+const port = 4000;
 app.listen(port, () => {
   console.log(`Started at http://localhost:${port}`);
 });
@@ -22,16 +24,15 @@ app.get("/meaning", (req, res) => {
 });
 
 app.post("/text", (req, res) => {
+  console.log("the req", req.body);
   // Load the model.
   useModel.load().then((model) => {
     // Embed an array of sentences.
-    console.log("body", req.body);
-    const sentences = ["Hello.", "How are you?"];
-    // model.embed(sentences).then((embeddings) => {
-    // `embeddings` is a 2D tensor consisting of the 512-dimensional embeddings for each sentence.
-    // So in this example `embeddings` has the shape [2, 512].
-    // embeddings.print(true /* verbose */);
-    // });
+    const sentences = [req.body.text];
+    model.embed(sentences).then((embeddings) => {
+      // `embeddings` is a 2D tensor consisting of the 512-dimensional embeddings for each sentence.
+      embeddings.print(true /* verbose */);
+    });
   });
 });
 
