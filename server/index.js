@@ -1,9 +1,8 @@
 require("dotenv/config");
-// require("@tensorflow/tfjs-node");
-require("@tensorflow/tfjs");
 const path = require("path");
 const bodyParser = require("body-parser");
-const useModel = require("@tensorflow-models/universal-sentence-encoder");
+require("@tensorflow/tfjs");
+const use = require("@tensorflow-models/universal-sentence-encoder");
 
 // create app
 const express = require("express");
@@ -19,27 +18,41 @@ app.listen(port, () => {
 });
 
 app.get("/meaning", (req, res) => {
-  console.log("hit");
   res.send("42");
 });
 
-app.post("/text", (req, res) => {
+app.post("/comparison_scores", (req, res) => {
   console.log("the req", req.body);
   // Load the model.
-  useModel.load().then((model) => {
-    // Embed an array of sentences.
-    const sentences = [req.body.text];
-    model.embed(sentences).then((embeddings) => {
-      // `embeddings` is a 2D tensor consisting of the 512-dimensional embeddings for each sentence.
-      embeddings.print(true /* verbose */);
-    });
+  use.loadQnA().then((model) => {
+    const input = {
+      queries: [req.body.question],
+      responses: [req.body.answer],
+    };
+
+    let scores = [];
+    const embeddings = model.embed(input);
+    const embed_query = embeddings["queryEmbedding"].arraySync();
+    const embed_responses = embeddings["responseEmbedding"].arraySync();
+    for (let i = 0; i < input["queries"].length; i++) {
+      for (let j = 0; j < input["responses"].length; j++) {
+        scores.push(dotProduct(embed_query[i], embed_responses[j]));
+      }
+    }
+    console.log({ scores });
+    res.send({ question: req.body.question, answer: req.body.answer, scores });
   });
+
+  const dotProduct = (xs, ys) => {
+    const sum = (xs) => (xs ? xs.reduce((a, b) => a + b, 0) : undefined);
+
+    return xs.length === ys.length
+      ? sum(zipWith((a, b) => a * b, xs, ys))
+      : undefined;
+  };
+
+  const zipWith = (f, xs, ys) => {
+    const ny = ys.length;
+    return (xs.length <= ny ? xs : xs.slice(0, ny)).map((x, i) => f(x, ys[i]));
+  };
 });
-
-// console.log(process.env.SECRET);
-
-// app.use(express.static("/"));
-
-// app.use((req, res, next) => {
-//   res.sendFile(path.join(__dirname, "..", "build", "index.html"));
-// });
