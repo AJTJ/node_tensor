@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 require("@tensorflow/tfjs");
 const use = require("@tensorflow-models/universal-sentence-encoder");
 
-// create app
 const express = require("express");
 const app = express();
 
@@ -22,8 +21,6 @@ app.get("/meaning", (req, res) => {
 });
 
 app.post("/comparison_scores", (req, res) => {
-  console.log("the req", req.body);
-  // Load the model.
   use.loadQnA().then((model) => {
     const input = {
       queries: [req.body.question],
