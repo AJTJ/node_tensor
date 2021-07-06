@@ -70,19 +70,43 @@ const QAOutcome = styled.div`
   }
 `;
 
+const ModalContainer = styled.div`
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(100, 100, 100, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalMessage = styled.div`
+  font-size: 30px;
+  font-weight: bolder;
+  background-color: wheat;
+  height: 150px;
+  width: 150px;
+  border-radius: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const LoadingModal = () => {
+  return (
+    <ModalContainer>
+      <ModalMessage>Loading</ModalMessage>
+    </ModalContainer>
+  );
+};
+
 const App = () => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [outcome, setOutcome] = useState("");
-
-  useEffect(() => {
-    // fetch("/meaning")
-    //   .then((r) => r.json())
-    //   .then((data) => {
-    //     console.log({ data });
-    //     setMeaning(data);
-    //   });
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -94,9 +118,14 @@ const App = () => {
       body: JSON.stringify({ question, answer }),
     };
 
+    setIsLoading(true);
+
     fetch("/comparison_scores", requestOptions)
       .then((r) => r.json())
-      .then((data) => setOutcome(data));
+      .then((data) => {
+        setIsLoading(false);
+        setOutcome(data);
+      });
   };
 
   const handleQuestionChange = (e) => {
@@ -111,15 +140,16 @@ const App = () => {
     <Project>
       <Title>Question/Answer match!</Title>
       <Explanation>
-        Write a question and an answer and see how closely the
-        universal-sentence-encoder scores your answer, in terms of closely it
-        matches the question.
+        Write a question and an answer and receive a score from the
+        universal-sentence-encoder on how closely it thinks your answer matches
+        the question.
       </Explanation>
 
-      <Form onSubmit={(e) => handleSubmit(e)}>
+      <Form disabled={isLoading} onSubmit={(e) => handleSubmit(e)}>
         <InputWrapper>
           <Label>Your Question:</Label>
           <TextInput
+            disabled={isLoading}
             placeholder="Write Something!"
             onChange={(e) => handleQuestionChange(e)}
             type="text"
@@ -129,13 +159,14 @@ const App = () => {
         <InputWrapper>
           <Label>Your Answer:</Label>
           <TextInput
+            disabled={isLoading}
             placeholder="Write Something!"
             onChange={(e) => handleAnswerChange(e)}
             type="text"
             value={answer}
           />
         </InputWrapper>
-        <InputButton type="submit" value="submit" />
+        <InputButton disabled={isLoading} type="submit" value="submit" />
       </Form>
       <Outcome>
         <Label>Answer Score (Out of 10):</Label>
@@ -145,6 +176,7 @@ const App = () => {
         </QAOutcome>
         {outcome?.scores && <OutcomeScore>{outcome?.scores}</OutcomeScore>}
       </Outcome>
+      {isLoading && <LoadingModal />}
     </Project>
   );
 };
